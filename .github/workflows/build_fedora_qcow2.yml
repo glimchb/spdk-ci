@@ -24,7 +24,7 @@
 # 2. Collect artifacts produced during execution.
 # 3. Integrate with third-party services, such as S3.
 #
-name: SPDK-CI build VM image
+name: SPDK-CI build Fedora VM image
 
 on:
   workflow_dispatch:
@@ -36,9 +36,9 @@ on:
   push:
     branches: ["main"]
     paths:
-    - '.github/workflows/build_qcow2.yml'
+    - '.github/workflows/build_fedora_qcow2.yml'
     - 'cijoe/configs/qemuhost-with-guest-fedora-40.toml'
-    - 'cijoe/workflows/build_qcow2_using_qemu.yaml'
+    - 'cijoe/workflows/build_fedora_qcow2_using_qemu.yaml'
 
 jobs:
 
@@ -46,7 +46,7 @@ jobs:
     runs-on: ubuntu-latest
 
     concurrency:
-      group: build_qcow2
+      group: build_fedora_qcow2
       cancel-in-progress: false
 
     steps:
@@ -68,7 +68,7 @@ jobs:
         name: repo-spdk
         path: spdk.tar.gz
 
-  build-qcow2:
+  build-fedora-qcow2:
     needs: source-archive
     runs-on: ubuntu-latest
     container:
@@ -83,7 +83,7 @@ jobs:
       REPOSITORY_TARBALL_PATH: ${{ github.workspace }}/spdk.tar.gz
 
     concurrency:
-      group: build_qcow2
+      group: build_fedora_qcow2
       cancel-in-progress: false
 
     steps:
@@ -103,7 +103,7 @@ jobs:
         cijoe \
         --monitor \
         --config configs/qemuhost-with-guest-fedora-40.toml \
-        --workflow workflows/build_qcow2_using_qemu.yaml
+        --workflow workflows/build_fedora_qcow2_using_qemu.yaml
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4.4.0
@@ -116,15 +116,15 @@ jobs:
       run: |
         qemu-img convert $HOME/guests/generic-bios-kvm-x86_64/boot.img fedora_40_x86_64.qcow2 -O qcow2 -c
 
-    - name: Store Qcow2 build artifacts
+    - name: Store Fedora Qcow2 build artifacts
       uses: actions/upload-artifact@v4.4.0
       with:
         name: vm-image-fedora_40_x86_64
         compression-level: 0
         path: fedora_40_x86_64.qcow2
 
-  cache-qcow2:
-    needs: build-qcow2
+  cache-fedora-qcow2:
+    needs: build-fedora-qcow2
     runs-on: ubuntu-latest
 
     steps:
@@ -142,7 +142,7 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Cache qcow2 image
+    - name: Cache Fedora qcow2 image
       id: cache-qcow2
       uses: actions/cache/save@v4
       with:
