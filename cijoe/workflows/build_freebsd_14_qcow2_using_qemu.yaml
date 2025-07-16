@@ -60,6 +60,13 @@ steps:
   run: |
     pkg install -y git
 
+- name: contigmem
+  run: |
+    echo 'hw.contigmem.num_buffers=1' >> /boot/loader.conf
+    echo 'hw.contigmem.buffer_size=1073741824' >> /boot/loader.conf
+    echo 'hw.contigmem.coredump_enable=1' >> /boot/loader.conf
+    echo 'contigmem_load="YES"' >> /boot/loader.conf
+
 - name: kernel_src
   uses: core.repository_prep
 
