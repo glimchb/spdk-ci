@@ -114,7 +114,7 @@ jobs:
 
     env:
       REPOSITORY_TARBALL_PATH: ${{ github.workspace }}/spdk.tar.gz
-      CI_CFGS_REPOSITORY_PATH: ${{ github.workspace }}/ci/cijoe/configs/autorun_configs
+      CI_CFGS_REPOSITORY_PATH: ${{ github.workspace }}/../ci/cijoe/configs/autorun_configs
 
     concurrency:
       group: ${{ format('build_{0}_qcow2', matrix.distro) }}
