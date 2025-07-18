@@ -133,9 +133,6 @@ jobs:
 
     - name: Build
       run: |
-        pwd
-        ls -l ci/cijoe/configs/autorun_configs
-        readlink -f ci/cijoe/configs/autorun_configs
         cd ci/cijoe
         cijoe \
         --monitor \
