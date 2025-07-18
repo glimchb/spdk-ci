@@ -59,9 +59,6 @@ steps:
 - name: guest_update
   run: |
     pkg install -y git
-    # DELETE ME
-    type .
-    type source
 
 - name: ci_configs_transfer
   uses: core.put
@@ -100,7 +97,7 @@ steps:
 
 - name: build_native_dpdk
   run: |
-    rootdir=/tmp/spdk && cd $rootdir && source ./test/common/autobuild_common.sh /tmp/configs/empty.conf && build_native_dpdk
+    rootdir=/tmp/spdk && cd $rootdir && . ./test/common/autobuild_common.sh /tmp/configs/empty.conf && build_native_dpdk
 
 - name: guest_shutdown
   run: |
