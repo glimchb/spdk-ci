@@ -55,10 +55,18 @@ steps:
     zpool online -e zroot vtbd0p4 || true
     zpool list
     df -h
+    ls -l .
+    find .
 
 - name: guest_update
   run: |
     pkg install -y git
+
+- name: ci_configs_transfer
+  uses: core.put
+  with:
+    src: "{{ local.env.CI_CFGS_REPOSITORY_PATH }}"
+    dst: /tmp/configs
 
 - name: contigmem
   run: |
@@ -81,12 +89,6 @@ steps:
     mkdir /tmp/spdk
     tar xzf /tmp/spdk.tar.gz -C /tmp/spdk
     rm /tmp/spdk.tar.gz
-
-- name: ci_configs_transfer
-  uses: core.put
-  with:
-    src: "{{ local.env.CI_CFGS_REPOSITORY_PATH }}"
-    dst: /opt/configs
 
 - name: guest_autotest_setup
   run: |
