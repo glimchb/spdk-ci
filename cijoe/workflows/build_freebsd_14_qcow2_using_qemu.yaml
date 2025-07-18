@@ -59,6 +59,9 @@ steps:
 - name: guest_update
   run: |
     pkg install -y git
+    # DELETE ME
+    type .
+    type source
 
 - name: ci_configs_transfer
   uses: core.put
