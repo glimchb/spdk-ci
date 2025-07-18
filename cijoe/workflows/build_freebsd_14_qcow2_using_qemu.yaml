@@ -55,8 +55,6 @@ steps:
     zpool online -e zroot vtbd0p4 || true
     zpool list
     df -h
-    ls -l .
-    find .
 
 - name: guest_update
   run: |
