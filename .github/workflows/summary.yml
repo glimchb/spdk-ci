@@ -72,7 +72,7 @@ jobs:
         fail_ci_if_error: true
         use_oidc: true
         files: ./_autorun_summary/ut_coverage/ut_cov_unit.info,./_autorun_summary/ut_coverage/ut_cov_total.info
-        slug: spdk/spdk
+        slug: glimchb/spdk
 
     outputs:
       result: ${{ steps.autorun_post.outputs.result }}
