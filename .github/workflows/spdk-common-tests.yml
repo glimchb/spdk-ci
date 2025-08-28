@@ -108,7 +108,7 @@ jobs:
     - name: Install additional packages
       run: |
         sudo bash -x ./scripts/pkgdep.sh --developer-tools
-        ls-l /etc/opt/spdk-pkgdep/paths/
+        ls -l /etc/opt/spdk-pkgdep/paths/
         grep "" /etc/opt/spdk-pkgdep/paths/*
         exit 1
 
