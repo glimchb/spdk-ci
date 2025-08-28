@@ -106,11 +106,7 @@ jobs:
     # TODO: consider 'autorun.sh' or 'autobuild.sh' or 'autotest.sh'
 
     - name: Install additional packages
-      run: |
-        sudo bash -x ./scripts/pkgdep.sh --developer-tools
-        ls -l /etc/opt/spdk-pkgdep/paths/
-        grep "" /etc/opt/spdk-pkgdep/paths/*
-        exit 1
+      run: sudo ./scripts/pkgdep.sh --developer-tools
 
     - name: Configure
       run: |
@@ -125,7 +121,9 @@ jobs:
             --without-vfio-user
 
     - name: Make
-      run: make -j
+      run: |
+        source ./scripts/common.sh
+        make -j
 
   autorun:
     name: ${{ matrix.workflow }}
