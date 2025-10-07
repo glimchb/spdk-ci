@@ -114,6 +114,7 @@ jobs:
       run: |
         set -x
         git config --global --add safe.directory /__w/spdk-ci/spdk-ci/ci
+        git config --global --add safe.directory /__w/spdk-ci/spdk-ci/spdk
         ../${{ env.spdk_path }}/autorun.sh ./cijoe/configs/autorun_configs/nvmf-tcp-vm-autotest.conf
       working-directory: ci
 
