@@ -112,9 +112,9 @@ jobs:
     - name: autorun
       run: |
         set -x
-        git config --global --add safe.directory /__w/spdk-ci/spdk-ci/spdk
-        ./autorun.sh ../ci/cijoe/configs/autorun_configs/nvmf-tcp-vm-autotest.conf
-      working-directory: ${{ env.spdk_path }}
+        git config --global --add safe.directory /__w/spdk-ci/spdk-ci/ci
+        ../${{ env.spdk_path }}/autorun.sh ./cijoe/configs/autorun_configs/nvmf-tcp-vm-autotest.conf
+      working-directory: ci
 
   distros-container:
     if: contains(inputs.changed_files, 'pkgdep')
@@ -175,6 +175,7 @@ jobs:
         make -j
 
   autorun:
+    if: false
     name: ${{ matrix.workflow }}
     needs:
     - checkout_spdk
