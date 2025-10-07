@@ -80,13 +80,18 @@ jobs:
     outputs:
       artifact_id: ${{ steps.get_artifact_id.outputs.artifact_id }}
 
-  nvmf-tcp-vm-autotest:
+  autorun-container:
     needs:
     - checkout_spdk
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/spdk/spdk-ci:fedora_40
     timeout-minutes: 60
+    strategy:
+      matrix:
+        workflow:
+        - nvmf-tcp-vm-autotest
+
     steps:
     - name: Checkout CI repository
       uses: actions/checkout@v4.1.7
@@ -115,7 +120,7 @@ jobs:
         set -x
         git config --global --add safe.directory /__w/spdk-ci/spdk-ci/ci
         git config --global --add safe.directory /__w/spdk-ci/spdk-ci/spdk
-        ../${{ env.spdk_path }}/autorun.sh ./cijoe/configs/autorun_configs/nvmf-tcp-vm-autotest.conf
+        ../${{ env.spdk_path }}/autorun.sh ./cijoe/configs/autorun_configs/${{ matrix.workflow }}.conf
       working-directory: ci
 
   distros-container:
