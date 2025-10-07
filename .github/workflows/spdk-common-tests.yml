@@ -81,6 +81,7 @@ jobs:
       artifact_id: ${{ steps.get_artifact_id.outputs.artifact_id }}
 
   autorun-container:
+    name: ${{ matrix.workflow }}
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/spdk/spdk-ci:fedora_40
