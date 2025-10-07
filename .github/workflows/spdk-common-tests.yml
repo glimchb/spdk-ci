@@ -81,47 +81,37 @@ jobs:
       artifact_id: ${{ steps.get_artifact_id.outputs.artifact_id }}
 
   autorun-container:
-    needs:
-    - checkout_spdk
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/spdk/spdk-ci:fedora_40
     timeout-minutes: 60
+    env:
+      gerrit_ref: ${{ inputs.client_payload != '' && fromJson(inputs.client_payload).patchSet.ref || inputs.gerrit_ref }}
+      spdk_path: './spdk'
     strategy:
       matrix:
         workflow:
         - nvmf-tcp-vm-autotest
-
     steps:
-    - name: Checkout CI repository
-      uses: actions/checkout@v4.1.7
+      # Required to use locally defined actions
+    - name: Checkout the spdk-ci repo locally
+      uses: actions/checkout@v4
+    - name: Checkout SPDK repo from Gerrit
+      uses: ./.github/actions/checkout_gerrit
       with:
-        path: ci
-
-    - name: Download the SPDK repository
-      uses: actions/download-artifact@v4.1.8
-      with:
-        name: repo-spdk
-
-    - name: Download the SPDK ABI repository
-      uses: actions/download-artifact@v4.1.8
-      with:
-        name: repo-spdk-abi
-
-    - name: Extract the SPDK repository
-      run: |
-        set -x
-        mkdir -p ${{ env.spdk_path }}
-        tar xzf spdk.tar.gz --strip 1 -C ${{ env.spdk_path }}
-        tar xzf spdk-abi.tar.gz --strip 1 -C ${{ env.spdk_path }}
-
+        gerrit_ref: ${{ env.gerrit_ref }}
+        spdk_path: ${{ env.spdk_path }}
     - name: autorun
       run: |
         set -x
-        git config --global --add safe.directory /__w/spdk-ci/spdk-ci/ci
-        git config --global --add safe.directory /__w/spdk-ci/spdk-ci/spdk
-        ../${{ env.spdk_path }}/autorun.sh ./cijoe/configs/autorun_configs/${{ matrix.workflow }}.conf
-      working-directory: ci
+        ls -l
+        ./autorun.sh ./cijoe/configs/autorun_configs/${{ matrix.workflow }}.conf
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4.4.0
+      if: always()
+      with:
+        path: ./output
+        name: common-job-${{ matrix.workflow }}
 
   distros-container:
     if: contains(inputs.changed_files, 'pkgdep')
