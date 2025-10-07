@@ -80,6 +80,35 @@ jobs:
     outputs:
       artifact_id: ${{ steps.get_artifact_id.outputs.artifact_id }}
 
+  nvmf-tcp-vm-autotest:
+    needs:
+    - checkout_spdk
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/spdk/spdk-ci:fedora_40
+    steps:
+    - uses: actions/download-artifact@v4.1.8
+      with:
+        name: repo-spdk
+    - name: autorun
+      run: |
+        set -x
+        tar xzf spdk.tar.gz --strip 1
+        cat > funtest.conf << EOF
+        SPDK_RUN_FUNCTIONAL_TEST=1
+        SPDK_TEST_NVMF=1
+        SPDK_TEST_NVME_CLI=1
+        SPDK_TEST_NVMF_TRANSPORT=tcp
+        SPDK_TEST_URING=0
+        SPDK_TEST_VFIOUSER=1
+        SPDK_TEST_USDT=1
+        SPDK_TEST_NVMF_MDNS=1
+        SPDK_RUN_UBSAN=1
+        SPDK_RUN_ASAN=1
+        NET_TYPE=virt
+        EOF
+        ./autorun.sh ./funtest.conf
+
   distros-container:
     if: contains(inputs.changed_files, 'pkgdep')
     needs:
