@@ -86,6 +86,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/spdk/spdk-ci:fedora_40
+    timeout-minutes: 60
     steps:
     - name: Checkout CI repository
       uses: actions/checkout@v4.1.7
