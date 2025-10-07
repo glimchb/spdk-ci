@@ -93,7 +93,9 @@ jobs:
     - name: autorun
       run: |
         set -x
-        tar xzf spdk.tar.gz --strip 1
+        mkdir -p spdk
+        tar xzf spdk.tar.gz --strip 1 -C spdk
+        pushd spdk
         cat > funtest.conf << EOF
         SPDK_RUN_FUNCTIONAL_TEST=1
         SPDK_TEST_NVMF=1
@@ -107,7 +109,7 @@ jobs:
         SPDK_RUN_ASAN=1
         NET_TYPE=virt
         EOF
-        ./autorun.sh ./funtest.conf
+        ./autorun.sh ../funtest.conf
 
   distros-container:
     if: contains(inputs.changed_files, 'pkgdep')
