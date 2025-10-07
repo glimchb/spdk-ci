@@ -105,13 +105,15 @@ jobs:
     - name: Extract the SPDK repository
       run: |
         set -x
-        tar xzf spdk.tar.gz --strip 1
-        tar xzf spdk-abi.tar.gz --strip 1
+        mkdir -p ${{ env.spdk_path }}
+        tar xzf spdk.tar.gz --strip 1 -C ${{ env.spdk_path }}
+        tar xzf spdk-abi.tar.gz --strip 1 -C ${{ env.spdk_path }}
 
     - name: autorun
       run: |
         set -x
-        ./autorun.sh ./ci/cijoe/configs/autorun_configs/nvmf-tcp-vm-autotest.conf
+        ./autorun.sh ../ci/cijoe/configs/autorun_configs/nvmf-tcp-vm-autotest.conf
+      working-directory: ${{ env.spdk_path }}
 
   distros-container:
     if: contains(inputs.changed_files, 'pkgdep')
