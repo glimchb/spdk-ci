@@ -87,29 +87,31 @@ jobs:
     container:
       image: ghcr.io/spdk/spdk-ci:fedora_40
     steps:
-    - uses: actions/download-artifact@v4.1.8
+    - name: Checkout CI repository
+      uses: actions/checkout@v4.1.7
+      with:
+        path: ci
+
+    - name: Download the SPDK repository
+      uses: actions/download-artifact@v4.1.8
       with:
         name: repo-spdk
+
+    - name: Download the SPDK ABI repository
+      uses: actions/download-artifact@v4.1.8
+      with:
+        name: repo-spdk-abi
+
+    - name: Extract the SPDK repository
+      run: |
+        set -x
+        tar xzf spdk.tar.gz --strip 1
+        tar xzf spdk-abi.tar.gz --strip 1
+
     - name: autorun
       run: |
         set -x
-        mkdir -p spdk
-        tar xzf spdk.tar.gz --strip 1 -C spdk
-        pushd spdk
-        cat > funtest.conf << EOF
-        SPDK_RUN_FUNCTIONAL_TEST=1
-        SPDK_TEST_NVMF=1
-        SPDK_TEST_NVME_CLI=1
-        SPDK_TEST_NVMF_TRANSPORT=tcp
-        SPDK_TEST_URING=0
-        SPDK_TEST_VFIOUSER=1
-        SPDK_TEST_USDT=1
-        SPDK_TEST_NVMF_MDNS=1
-        SPDK_RUN_UBSAN=1
-        SPDK_RUN_ASAN=1
-        NET_TYPE=virt
-        EOF
-        ./autorun.sh ../funtest.conf
+        ./autorun.sh ./ci/cijoe/configs/autorun_configs/nvmf-tcp-vm-autotest.conf
 
   distros-container:
     if: contains(inputs.changed_files, 'pkgdep')
