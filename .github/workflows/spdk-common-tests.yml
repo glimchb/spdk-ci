@@ -137,14 +137,15 @@ jobs:
             --without-vtune \
             --without-vfio-user
         source ./scripts/common.sh
-        ls -l /var/spdk/dependencies/pip/bin
-        cat /var/spdk/dependencies/pip/bin/meson
-        file /var/spdk/dependencies/pip/bin/python
-        ${{ matrix.distro == '' && 'sudo' || '' }} ls -l  /root/.local/share/uv/python/cpython-3.11.13-linux-aarch64-gnu/bin/
-        ${{ matrix.distro == '' && 'sudo' || '' }} file  /root/.local/share/uv/python/cpython-3.11.13-linux-aarch64-gnu/bin/python3.11
-        ${{ matrix.distro == '' && 'sudo' || '' }} /root/.local/share/uv/python/cpython-3.11.13-linux-aarch64-gnu/bin/python3.11 --version
-        ${{ matrix.distro == '' && 'sudo' || '' }} /var/spdk/dependencies/pip/bin/meson --version
-        ${{ matrix.distro == '' && 'sudo' || '' }} make -j
+        make -j
+        # ls -l /var/spdk/dependencies/pip/bin
+        # cat /var/spdk/dependencies/pip/bin/meson
+        # file /var/spdk/dependencies/pip/bin/python
+        # ${{ matrix.distro == '' && 'sudo' || '' }} ls -l  /root/.local/share/uv/python/cpython-3.11.13-linux-aarch64-gnu/bin/
+        # ${{ matrix.distro == '' && 'sudo' || '' }} file  /root/.local/share/uv/python/cpython-3.11.13-linux-aarch64-gnu/bin/python3.11
+        # ${{ matrix.distro == '' && 'sudo' || '' }} /root/.local/share/uv/python/cpython-3.11.13-linux-aarch64-gnu/bin/python3.11 --version
+        # ${{ matrix.distro == '' && 'sudo' || '' }} /var/spdk/dependencies/pip/bin/meson --version
+        # ${{ matrix.distro == '' && 'sudo' || '' }} make -j
 
   autorun:
     name: ${{ matrix.workflow }}
