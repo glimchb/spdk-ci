@@ -143,10 +143,14 @@ jobs:
         ls -l /opt/uv-python/
         python --version || true
         sudo python --version
-        meson --version || true
-        sudo meson --version
-        make -j || true
-        sudo make -j
+        /var/spdk/dependencies/pip/bin/python --version || true
+        sudo /var/spdk/dependencies/pip/bin/python --version
+        /var/spdk/dependencies/pip/bin/meson --version || true
+        sudo /var/spdk/dependencies/pip/bin/meson --version
+        # meson --version || true
+        # sudo meson --version || true
+        # make -j || true
+        # sudo make -j
         # ${{ matrix.distro == '' && 'sudo' || '' }} ls -l  /root/.local/share/uv/python/cpython-3.11.13-linux-aarch64-gnu/bin/
         # ${{ matrix.distro == '' && 'sudo' || '' }} file  /root/.local/share/uv/python/cpython-3.11.13-linux-aarch64-gnu/bin/python3.11
         # ${{ matrix.distro == '' && 'sudo' || '' }} /root/.local/share/uv/python/cpython-3.11.13-linux-aarch64-gnu/bin/python3.11 --version
