@@ -139,6 +139,10 @@ jobs:
         source ./scripts/common.sh
         ls -l /var/spdk/dependencies/pip/bin
         cat /var/spdk/dependencies/pip/bin/meson
+        file /var/spdk/dependencies/pip/bin/python
+        ls -l  /root/.local/share/uv/python/cpython-3.11.13-linux-aarch64-gnu/bin/
+        file  /root/.local/share/uv/python/cpython-3.11.13-linux-aarch64-gnu/bin/python3.11
+        /root/.local/share/uv/python/cpython-3.11.13-linux-aarch64-gnu/bin/python3.11 --version
         /var/spdk/dependencies/pip/bin/meson --version
         make -j
 
