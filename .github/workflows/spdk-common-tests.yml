@@ -85,6 +85,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/spdk/spdk-ci:fedora_40
+      options: --privileged
     timeout-minutes: 60
     env:
       gerrit_ref: ${{ inputs.client_payload != '' && fromJson(inputs.client_payload).patchSet.ref || inputs.gerrit_ref }}
