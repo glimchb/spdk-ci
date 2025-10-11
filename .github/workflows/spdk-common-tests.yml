@@ -110,7 +110,9 @@ jobs:
         id
         # TODO: remove me
         dnf install -y sudo pam
+        echo "Defaults !pam" >> /etc/sudoers
         echo "root ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/root
+        sudo -n true
         sudo ./spdk/autorun.sh ./cijoe/configs/autorun_configs/${{ matrix.workflow }}.conf
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4.4.0
