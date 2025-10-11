@@ -107,6 +107,10 @@ jobs:
       run: |
         set -x
         ls -l
+        id
+        sudo ./spdk/autorun.sh ./cijoe/configs/autorun_configs/${{ matrix.workflow }}.conf || true
+        ./spdk/autorun.sh ./cijoe/configs/autorun_configs/${{ matrix.workflow }}.conf || true
+        sudo -s
         ./spdk/autorun.sh ./cijoe/configs/autorun_configs/${{ matrix.workflow }}.conf
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4.4.0
