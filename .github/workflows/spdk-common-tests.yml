@@ -122,6 +122,11 @@ jobs:
       run: apt-get update
     - if: contains(matrix.distro, 'redhat')
       run: dnf install -y rubygem-{bundler,rake}
+    - if: matrix.distro == 'registry.access.redhat.com/ubi8/ubi'
+      run: |
+        set -x
+        yum install -y python3.11 python3.11-devel
+        alternatives --set python /usr/bin/python3.11
     - if: matrix.distro == 'registry.access.redhat.com/ubi9/ubi'
       run: |
         set -x
