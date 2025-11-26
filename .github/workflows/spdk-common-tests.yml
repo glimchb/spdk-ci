@@ -121,7 +121,7 @@ jobs:
     - if: contains(matrix.distro, 'ubuntu') || contains(matrix.distro, 'debian')
       run: apt-get update
     - if: contains(matrix.distro, 'redhat')
-      run: dnf install -y numactl-libs rubygem-{bundler,rake}
+      run: dnf install -y rubygem-{bundler,rake}
     - if: matrix.distro == 'docker.io/opensuse/leap:15.6'
       run: zypper install -y tar gzip
     - shell: bash
@@ -134,6 +134,7 @@ jobs:
         # TODO: consider 'autorun.sh' or 'autobuild.sh' or 'autotest.sh'
         ${{ matrix.distro == '' && 'sudo' || '' }} ./scripts/pkgdep.sh --all
         ./configure --enable-coverage \
+            --max-numa-nodes=1 \
             --without-uring \
             --without-fio \
             --without-rbd \
