@@ -121,7 +121,12 @@ jobs:
     - if: contains(matrix.distro, 'ubuntu') || contains(matrix.distro, 'debian')
       run: apt-get update
     - if: contains(matrix.distro, 'redhat')
-      run: dnf install -y rubygem-{bundler,rake}
+      run: |
+        set -x
+        dnf install -y rubygem-{bundler,rake}
+        curl -kLO  https://download.rockylinux.org/pub/rocky/9/AppStream/x86_64/os/Packages/n/numactl-devel-2.0.19-1.el9.x86_64.rpm
+        curl -kLO https://download.rockylinux.org/pub/rocky/10/AppStream/x86_64/os/Packages/n/numactl-devel-2.0.19-2.el10.x86_64.rpm
+        dnf install -y ./numactl-devel*
     - if: matrix.distro == 'docker.io/opensuse/leap:15.6'
       run: zypper install -y tar gzip
     - shell: bash
