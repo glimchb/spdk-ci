@@ -35,91 +35,53 @@ on:
     - wip-state-changed
     - private-state-changed
 
-env:
-  # TODO: Renable client_payload for workflow_dispatch
-  client_payload: ${{ github.event.client_payload != '' && toJson(github.event.client_payload) || '' }}
+# env:
+#   # TODO: Renable client_payload for workflow_dispatch
+#   # Workaround for https://github.com/actions/runner/issues/2372
+#   client_payload: ${{ github.event.client_payload != '' && toJson(github.event.client_payload) || '' }}
 
 jobs:
-  env_vars: # Workaround for https://github.com/actions/runner/issues/2372
-    name: Setup enviroment
-    runs-on: ubuntu-latest
-    outputs:
-      client_payload: ${{ env.client_payload }}
-    steps:
-    - run: echo "Passing workflow env vars to reusable workflows"
 
   patch_set_status:
     name: Verify patch set state
-    needs: env_vars
     runs-on: ubuntu-latest
-    if: ${{ needs.env_vars.outputs.client_payload }}
+    if: github.event.client_payload != ''
+    outputs:
+      changed_files: ${{ steps.patch.outputs.changed_files }}
+      client_payload: ${{ env.client_payload }}
     env:
       GH_TOKEN: ${{ github.token }}
+      client_payload: ${{ github.event.client_payload != '' && toJson(github.event.client_payload) || '' }}
     steps:
+    - uses: actions/checkout@v4
     - name: Check patch set status
-      run: |
-        set -e
-        set -x
-
-        change_num="${{ fromJSON(needs.env_vars.outputs.client_payload).change.number }}"
-        patch_set="${{ fromJSON(needs.env_vars.outputs.client_payload).patchSet.number }}"
-        title="${{ fromJSON(needs.env_vars.outputs.client_payload).change.subject }}"
-
-        echo "SPDK: ($change_num/$patch_set)$title" >> $GITHUB_STEP_SUMMARY
-        echo "Gerrit: <https://review.spdk.io/c/spdk/spdk/+/$change_num/$patch_set>" >> $GITHUB_STEP_SUMMARY
-
-        # Get latest info about a change itself
-        curl -s -X GET "https://review.spdk.io/changes/spdk%2Fspdk~$change_num?o=DETAILED_ACCOUNTS&o=LABELS&o=SKIP_DIFFSTAT" \
-        | tail -n +2 >  change.json
-
-        if [[ ! -s change.json ]]; then
-          echo "Change $change_num not found, exiting." >> $GITHUB_STEP_SUMMARY
-          echo "Either it's a private change or in restricted branch." >> $GITHUB_STEP_SUMMARY
-          gh run cancel ${{ github.run_id }} -R ${{ github.repository }}
-        fi
-
-        # Do not test any change marked as WIP
-        # .work_in_progress is not set when false
-        work_in_progress="$(jq -r '.work_in_progress' change.json)"
-        if [[ "$work_in_progress" == "true" ]]; then
-          echo "Ignore. Patch is currently WIP." >> $GITHUB_STEP_SUMMARY
-          gh run cancel ${{ github.run_id }} -R ${{ github.repository }}
-        fi
-
-        # Only test latest patch set
-        current_patch_set="$(jq -r '.current_revision_number' change.json)"
-        if ((current_patch_set != $patch_set)); then
-          echo "Ignore. Patch set $patch_set is not the latest." >> $GITHUB_STEP_SUMMARY
-          gh run cancel ${{ github.run_id }} -R ${{ github.repository }}
-        fi
-
-        # Test only changes without a Verified vote already present
-        verified=$(jq -r ".labels.Verified.all[]? | select(.username==\"${{ secrets.GERRIT_BOT_USER }}\").value" change.json)
-        if ((verified != 0)); then
-          echo "Ignore. Patch already has a vote from CI." >> $GITHUB_STEP_SUMMARY
-          gh run cancel ${{ github.run_id }} -R ${{ github.repository }}
-        fi
+      id: patch
+      env:
+        CHANGE_NUM: ${{ fromJSON(env.client_payload).change.number }}
+        PATCH_SET: ${{ fromJSON(env.client_payload).patchSet.number }}
+        TITLE: ${{ fromJSON(env.client_payload).change.subject }}
+        GERRIT_BOT_USER: ${{ secrets.GERRIT_BOT_USER }}
+      run: .github/scripts/parse_gerrit_webhook.sh
 
   common:
     name: Common tests
     if: ${{ !cancelled() }}
     needs:
-    - env_vars
     - patch_set_status
     uses: ./.github/workflows/spdk-common-tests.yml
     with:
       # "Client payload" is all of the information Gerrit webhooks sends out.
-      client_payload: ${{ needs.env_vars.outputs.client_payload }}
+      client_payload: ${{ needs.patch_set_status.outputs.client_payload }}
+      changed_files: $${{ needs.patch_set_status.outputs.changed_files }}
 
   hpe:
     name: NVMe-oF RDMA tests
-    if: ${{ !cancelled() }}
+    if: ${{ !cancelled() && github.repository == 'spdk/spdk-ci' }}
     needs:
-    - env_vars
     - patch_set_status
     uses: ./.github/workflows/nvmf-rdma.yml
     with:
-      client_payload: ${{ needs.env_vars.outputs.client_payload }}
+      client_payload: ${{ needs.patch_set_status.outputs.client_payload }}
   # Add more jobs below if needed.
 
 
@@ -128,12 +90,13 @@ jobs:
     name: Job summary
     if: ${{ !cancelled() }}
     needs:
-    - env_vars
     - patch_set_status
     - common
     - hpe
     uses: ./.github/workflows/summary.yml
     with:
-      client_payload: ${{ needs.env_vars.outputs.client_payload }}
-      result: ${{ (needs.common.result == 'success' && needs.hpe.result == 'success') && 'success' || 'failure' }}
+      client_payload: ${{ needs.patch_set_status.outputs.client_payload }}
+      result: >-
+        ${{ (needs.common.result == 'success' && (needs.hpe.result == 'success' || needs.hpe.result == 'skipped')) &&
+        'success' || 'failure' }}
     secrets: inherit

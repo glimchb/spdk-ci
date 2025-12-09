@@ -12,9 +12,18 @@ on:
         required: false
         type: string
         default: ''
+      force_pkgdep:
+        description: 'Force pkgdep test phase to run'
+        required: true
+        type: boolean
+        default: false
   workflow_call:
     inputs:
       client_payload:
+        required: false
+        type: string
+        default: ''
+      changed_files:
         required: false
         type: string
         default: ''
@@ -30,13 +39,16 @@ jobs:
       # Required to use locally defined actions
     - name: Checkout the spdk-ci repo locally
       uses: actions/checkout@v4.1.7
+
     - name: Prepare SPDK repo by checking out from Gerrit
       uses: ./.github/actions/checkout_gerrit
       with:
         gerrit_ref: ${{ env.gerrit_ref }}
         spdk_path: ${{ env.spdk_path }}
+
     - name: Create repository tarball
       run: tar -C ${{ env.spdk_path }} -czf spdk.tar.gz .
+
     - name: Upload the repository tarball as an artifact
       uses: actions/upload-artifact@v4.4.0
       with:
@@ -50,6 +62,7 @@ jobs:
         path: './spdk-abi'
         fetch-depth: '0'
         fetch-tags: 'true'
+
     - name: Create abi tarball
       run: tar -C './spdk-abi' -czf spdk-abi.tar.gz .
     - name: Upload the abi tarball as an artifact
@@ -58,14 +71,11 @@ jobs:
         name: repo-spdk-abi
         path: spdk-abi.tar.gz
 
-  select_vm_image:
-    runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ github.token }}
-    steps:
     - name: Select latest qcow2 artifact
       id: get_artifact_id
       # TODO: make it a composite action for reuse
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
         set -x
         fedora_40=$(gh api --paginate "/repos/${{ github.repository }}/actions/artifacts?name=vm-image-fedora_40_x86_64" -q '.artifacts |= sort_by(.updated_at)[-1] | .artifacts.workflow_run.id')
@@ -76,11 +86,78 @@ jobs:
     outputs:
       artifact_id: ${{ steps.get_artifact_id.outputs.artifact_id }}
 
+  pkgdep:
+    if: |
+      contains(inputs.changed_files, 'pkgdep') ||
+      contains(inputs.changed_files, 'autotest_setup.sh') ||
+      inputs.force_pkgdep == true
+    needs:
+    - checkout_spdk
+    strategy:
+      matrix:
+        # Keep latest 2 versions of each flavor here
+        distro:
+        - quay.io/centos/centos:9
+        - quay.io/centos/centos:10
+        - docker.io/rockylinux/rockylinux:9
+        - docker.io/rockylinux/rockylinux:10
+        - docker.io/library/ubuntu:20.04
+        - docker.io/library/ubuntu:22.04
+        - docker.io/library/ubuntu:24.04
+        - docker.io/library/fedora:42
+        - docker.io/library/fedora:43
+        - docker.io/library/debian:12.12
+        - docker.io/library/debian:11.11
+        - docker.io/opensuse/leap:15.6
+        # - docker.io/opensuse/leap:16.0
+        # - mcr.microsoft.com/azurelinux/base/core:3.0
+        # - docker.io/library/archlinux:base-20250907.0.417472
+        include:
+        # TODO: consider also [macos-latest, windows-2022]
+        - os: ubuntu-22.04-arm
+          distro: ""   # no container for this one
+    runs-on: ${{ matrix.os || 'ubuntu-latest' }}
+    env:
+      DISTRO: ${{ matrix.distro }}
+    container: ${{ matrix.distro != '' && matrix.distro || null }}
+    steps:
+    - uses: actions/download-artifact@v4.1.8
+      with:
+        name: repo-spdk
+    - if: contains(matrix.distro, 'ubuntu') || contains(matrix.distro, 'debian')
+      run: apt-get update
+    - if: matrix.distro == 'docker.io/opensuse/leap:15.6'
+      run: zypper install -y tar gzip
+    - shell: bash
+      env:
+        TZ: Etc/UTC
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        set -x
+        tar xzf spdk.tar.gz --strip 1
+        # TODO: consider 'autorun.sh' or 'autobuild.sh' or 'autotest.sh'
+        if [[ $DISTRO =~ "fedora:43" ]]; then
+          ./test/common/config/autotest_setup.sh --install-deps \
+            --test-conf="fio,flamegraph,qemu,libiscsi,nvmecli,spdk,refspdk,lcov,bpftrace,doxygen"
+        else
+          ${{ matrix.distro == '' && 'sudo' || '' }} ./scripts/pkgdep.sh --all
+        fi
+        ./configure --enable-coverage \
+            --without-uring \
+            --without-fio \
+            --without-rbd \
+            --without-rdma \
+            --without-shared \
+            --without-iscsi-initiator \
+            --without-vtune \
+            --without-vfio-user
+        source ./scripts/common.sh
+        make -j
+
   autorun:
     name: ${{ matrix.workflow }}
     needs:
     - checkout_spdk
-    - select_vm_image
     runs-on: ubuntu-latest
     timeout-minutes: 60
     strategy:
@@ -94,12 +171,16 @@ jobs:
         - iscsi-vm-autotest
         - iscsi-uring-vm-autotest
         - unittest-gcc-container-autotest
+        - unittest-clang-container-autotest
+        - unittest-valgrind-container-autotest
         - check-format-container-autotest
         - release-build-gcc-container-autotest
+        - release-build-clang-container-autotest
         - doc-container-autotest
         - build-files-container-autotest
         - scan-build-container-autotest
         - check-so-deps-container-autotest
+        - short-fuzz-phy-autotest
         include:
         - nvme_setup: "zns"
         - distro: "fedora_40"
@@ -157,7 +238,7 @@ jobs:
       with:
         name: vm-image-${{matrix.distro}}_x86_64
         github-token: ${{ github.token }}
-        run-id: ${{ fromJson(needs.select_vm_image.outputs.artifact_id)[ matrix.distro ] }}
+        run-id: ${{ fromJson(needs.checkout_spdk.outputs.artifact_id)[ matrix.distro ] }}
 
     - name: qemu-guest, provision
       run: |
@@ -176,7 +257,7 @@ jobs:
         --monitor
 
     - name: qemu-guest, cleanup
-      if: always()
+      if: always() && hashFiles('ci/cijoe')
       run: |
         cd ci/cijoe
         cijoe workflows/autorun_in_qemu.yaml output_listing retrieve_autorun_output \
