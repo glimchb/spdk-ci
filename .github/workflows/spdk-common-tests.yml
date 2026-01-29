@@ -44,6 +44,8 @@ jobs:
       # Required to use locally defined actions
     - name: Checkout the spdk-ci repo locally
       uses: actions/checkout@v4.1.7
+      with:
+        repository: 'spdk/spdk-ci'
 
     - name: Prepare SPDK repo by checking out from Gerrit
       uses: spdk/spdk-ci/.github/actions/checkout_gerrit@main
