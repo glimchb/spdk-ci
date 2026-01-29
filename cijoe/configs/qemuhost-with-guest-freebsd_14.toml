@@ -50,6 +50,6 @@ cloud.path = "{{ local.env.HOME }}/system_imaging/cloud/freebsd-14.2-zfs-2024-12
 cloud.metadata_path = "{{ resources.auxiliary['system_imaging.cloudinit-freebsd-metadata'] }}"
 cloud.userdata_path = "{{ resources.auxiliary['system_imaging.cloudinit-freebsd-userdata'] }}"
 # disk.path = "{{ local.env.HOME }}/system_imaging/disk/freebsd_14_x86_64.qcow2"
-disk.path = "/__w/spdk-ci/spdk-ci/freebsd_14_x86_64.qcow2"
+disk.path = "{{ local.env.GITHUB_WORKSPACE }}/freebsd_14_x86_64.qcow2"
 docker.name = "spdk-ci"
 docker.tag = "freebsd_14"
