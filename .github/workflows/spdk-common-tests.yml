@@ -46,7 +46,7 @@ jobs:
       uses: actions/checkout@v4.1.7
 
     - name: Prepare SPDK repo by checking out from Gerrit
-      uses: ./.github/actions/checkout_gerrit
+      uses: spdk/spdk-ci/.github/actions/checkout_gerrit@main
       with:
         gerrit_ref: ${{ env.gerrit_ref }}
         spdk_path: ${{ env.spdk_path }}
