@@ -56,8 +56,10 @@ jobs:
         #       It's ~1GB with all it's dependecies, which is an overkill for
         #       a few table operations.
         sudo apt-get update && sudo apt-get install -y lcov python3-pandas
-        ./spdk/autorun_post.py --directory_location ./_autorun_summary --repo_directory ./spdk ${{ inputs.skip_confirm == 'true' && '--skip_confirm' || '' }}
+        ./spdk/autorun_post.py --directory_location ./_autorun_summary --repo_directory ./spdk "${TO_SKIP}"
         echo "result=success" >> "$GITHUB_OUTPUT"
+      env:
+        TO_SKIP: ${{ inputs.skip_confirm == true && '--skip_confirm' || '' }}
 
     - name: Upload artifacts
       if: ${{ always() }}
