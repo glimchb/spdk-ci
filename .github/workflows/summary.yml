@@ -12,6 +12,11 @@ on:
         required: true
         type: string
         default: 'failure'
+      skip_confirm:
+        description: 'Do not check if all autotest.sh tests were executed.'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   merge_outputs:
@@ -51,7 +56,7 @@ jobs:
         #       It's ~1GB with all it's dependecies, which is an overkill for
         #       a few table operations.
         sudo apt-get update && sudo apt-get install -y lcov python3-pandas
-        ./spdk/autorun_post.py -d ./_autorun_summary -r ./spdk
+        ./spdk/autorun_post.py --directory_location ./_autorun_summary --repo_directory ./spdk ${{ inputs.skip_confirm == 'true' && '--skip_confirm' || '' }}
         echo "result=success" >> "$GITHUB_OUTPUT"
 
     - name: Upload artifacts
