@@ -86,9 +86,13 @@ steps:
     echo "== boris2 =="
     ls -l /usr/local/bin/gcc* || true
     type -P gcc || true
+    type gcc || true
     readlink -f $(type -P gcc) || true
+    readlink -f $(type gcc) || true
     pkg which $(type -P gcc) || true
+    pkg which $(type gcc) || true
     pkg which $(readlink -f $(type -P gcc)) || true
+    pkg which $(readlink -f $(type gcc)) || true
     freebsd-version || true
     mkdir /tmp/git_repos
     exit 1
