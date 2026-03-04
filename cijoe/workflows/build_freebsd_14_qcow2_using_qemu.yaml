@@ -94,6 +94,18 @@ steps:
     pkg which $(readlink -f $(type -P gcc)) || true
     pkg which $(readlink -f $(type gcc)) || true
     freebsd-version || true
+    echo "== boris3 =="
+    pkg install gcc
+    ls -l /usr/local/bin/gcc* || true
+    type -P gcc || true
+    type gcc || true
+    readlink -f $(type -P gcc) || true
+    readlink -f $(type gcc) || true
+    pkg which $(type -P gcc) || true
+    pkg which $(type gcc) || true
+    pkg which $(readlink -f $(type -P gcc)) || true
+    pkg which $(readlink -f $(type gcc)) || true
+    freebsd-version || true
     mkdir /tmp/git_repos
     exit 1
     CC=gcc14 SYSDIR="{{ local.env.HOME }}/git/freebsd/sys" /tmp/spdk/test/common/config/autotest_setup.sh --install-deps --upgrade --dir-git="/tmp/git_repos" --test-conf="lcov,flamegraph,fio,nvmecli,bpftrace,qemu,contigmem"
