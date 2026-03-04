@@ -95,7 +95,7 @@ steps:
     pkg which $(readlink -f $(type gcc)) || true
     freebsd-version || true
     echo "== boris3 =="
-    pkg install gcc
+    pkg install -y gcc
     ls -l /usr/local/bin/gcc* || true
     type -P gcc || true
     type gcc || true
