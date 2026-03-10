@@ -81,7 +81,7 @@ jobs:
         disable_search: true
         files: ./_autorun_summary/ut_coverage/ut_cov_total.info
         override_commit: ${{ steps.autorun_post.outputs.spdk_sha }}
-        slug: spdk/spdk
+        slug: glimchb/spdk
 
     outputs:
       result: ${{ steps.autorun_post.outputs.result }}
