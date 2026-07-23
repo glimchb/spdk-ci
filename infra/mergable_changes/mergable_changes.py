@@ -40,6 +40,7 @@ class GerritChange:
     has_merge_conflict: bool = False
     needs_plus_two: bool = False
     ready: bool = False
+    is_outdated: bool = False
     age: datetime.timedelta = field(init=False)
     hours: int = field(init=False)
     url: str = field(init=False)
@@ -68,6 +69,9 @@ class GerritChange:
         if not is_submittable or not is_mergeable:
             ready = False
 
+        messages = change_json.get('messages', [])
+        is_outdated = any("OUTDATED PATCH WARNING" in m.get('message', '') for m in messages)
+
         return cls(
             number=change_json['_number'],
             project=change_json['project'],
@@ -79,7 +83,8 @@ class GerritChange:
             has_minus_one=has_minus_one,
             has_merge_conflict=has_merge_conflict,
             needs_plus_two=needs_plus_two,
-            ready=ready
+            ready=ready,
+            is_outdated=is_outdated
         )
 
     @classmethod
@@ -133,7 +138,8 @@ class GerritChange:
 def get_gerrit_changes(gerrit, all_changes):
     query = "".join([
         "/changes/", "?q=project:spdk/spdk status:open label:Code-Review=2 label:Verified=1",
-        "&o=CURRENT_REVISION", "&o=DETAILED_LABELS", "&o=DETAILED_ACCOUNTS", "&o=SUBMITTABLE"
+        "&o=CURRENT_REVISION", "&o=DETAILED_LABELS", "&o=DETAILED_ACCOUNTS", "&o=SUBMITTABLE",
+        "&o=MESSAGES"
     ])
     try:
         changes_json = gerrit.get(query)
@@ -165,6 +171,9 @@ def get_merge_conflict_changes(all_changes):
 def get_blocked_by_changes(all_changes):
     return [c for c in all_changes if c.blocked_by]
 
+def get_outdated_changes(all_changes):
+    return [c for c in all_changes if c.is_outdated]
+
 def write_text_summary(all_changes):
     def write_and_log(line, fh):
         fh.write(line + "\n")
@@ -175,7 +184,8 @@ def write_text_summary(all_changes):
         "Changes needing another +2 CR vote": get_needs_plus_two_changes(all_changes),
         "Changes with a -1 CR vote": get_minus_one_changes(all_changes),
         "Changes with a merge conflict": get_merge_conflict_changes(all_changes),
-        "Changes blocked by parents in series": get_blocked_by_changes(all_changes)
+        "Changes blocked by parents in series": get_blocked_by_changes(all_changes),
+        "Outdated changes": get_outdated_changes(all_changes)
     }
 
     timestamp = datetime.datetime.now(datetime.timezone.utc)
@@ -190,13 +200,13 @@ def write_text_summary(all_changes):
                 table = PrettyTable()
                 table.align = "l"
                 field_names = ["Number", "Subject", "Owner", "URL", "Age"]
-                field_names.append("Reviewed by") if "another +2 CR" in section_name else None
+                field_names.append("Reviewed by") if "another +2 CR" in section_name or "Outdated" in section_name else None
                 field_names.append("Blocked by") if "blocked" in section_name else None
                     
                 table.field_names = field_names
                 for change in changes:
                     row_values = [change.number, change.subject, change.owner, change.url, f"{change.age.days:} days {change.hours} hours"]
-                    row_values.append(change.reviewed_by) if "another +2 CR" in section_name else None
+                    row_values.append(change.reviewed_by) if "another +2 CR" in section_name or "Outdated" in section_name else None
                     row_values.append(change.blocked_by.url) if "blocked" in section_name else None
                     table.add_row(row_values)
                 write_and_log(table.get_string() + "\n", fh)
