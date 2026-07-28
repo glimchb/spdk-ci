@@ -61,6 +61,13 @@ if [[ "$work_in_progress" == "true" ]]; then
 	exit 0
 fi
 
+# Do not retest [RFC] patches
+subject="$(jq -r '.subject' change.json)"
+if [[ "${subject,,}" == *"[rfc]"* ]]; then
+	echo "::notice title=Skipped::Comment posted to [RFC] change."
+	exit 0
+fi
+
 # Only test latest patch set
 current_patch_set="$(jq -r '.current_revision_number' change.json)"
 if ((current_patch_set != patch_set)); then

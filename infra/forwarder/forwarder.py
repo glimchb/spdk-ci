@@ -345,6 +345,11 @@ def _should_drop_event(event_data):
     if status is not None and status != "NEW":
         return True, f"status={status}"
 
+    # Drop patches with [RFC] in the commit subject (case-insensitive)
+    subject = event_data.get("payload", {}).get("change", {}).get("subject", "")
+    if re.search(r"\[RFC\]", subject, re.IGNORECASE):
+        return True, "rfc"
+
     return False, None
 
 

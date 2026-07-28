@@ -22,6 +22,12 @@ if [[ "$work_in_progress" == "true" ]]; then
     gh run cancel "${GITHUB_RUN_ID}" -R "${GITHUB_REPOSITORY}"
 fi
 
+# Do not test any change with [RFC] in the subject
+if [[ "${TITLE,,}" == *"[rfc]"* ]]; then
+    echo "Ignore. Patch subject contains [RFC]." >> "${GITHUB_STEP_SUMMARY}"
+    gh run cancel "${GITHUB_RUN_ID}" -R "${GITHUB_REPOSITORY}"
+fi
+
 # Only test latest patch set
 current_patch_set="$(jq -r '.current_revision_number' change.json)"
 if ((current_patch_set != PATCH_SET)); then
