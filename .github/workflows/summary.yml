@@ -45,6 +45,11 @@ jobs:
         echo "GitHub run-id: ${{ github.run_id }}" >> $summary
         cat "$summary" >> $GITHUB_STEP_SUMMARY
 
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        python-version: "3.x"
+
     - name: Post process artifacts from jobs
       id: autorun_post
       working-directory: spdk
@@ -57,12 +62,12 @@ jobs:
           -o Acquire::Retries=3 \
           -o APT::Update::Error-Mode=any \
           update
-        sudo apt-get install -y lcov python3-pandas python3-tabulate
+        sudo apt-get install -y lcov
         # This step is needed for auto code generation of the header file `include/spdk_internal/rpc_autogen.h`
         ./configure --without-nvme-cuse
         make -C include jsonrpc
         # Now can run post processing
-        ./scripts/autorun_post.py -d ../_autorun_summary -r ./
+        uv run --with pandas --with tabulate ./scripts/autorun_post.py -d ../_autorun_summary -r ./
         echo "result=success" >> "$GITHUB_OUTPUT"
 
     - name: Upload artifacts
